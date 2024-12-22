@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'package:my_app/app/app.locator.dart';
 import 'package:my_app/services/pet_service.dart';
 
 class TimeService {
-  final PetService _petService;
+  final _petService = locator<PetService>();
   Timer? _gameTimer;
 
-  TimeService(this._petService);
+  TimeService();
 
   void startGameLoop() {
     _gameTimer?.cancel();

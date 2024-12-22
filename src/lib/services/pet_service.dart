@@ -81,9 +81,11 @@ class PetService {
     };
   }
 
-  void loadFromJson(Map<String, dynamic> json) {
-    if (json['currentPet'] != null) {
-      _currentPet = Pet.fromJson(json['currentPet']);
+  void loadFromJson(Map<String, dynamic> petData) {
+    if (petData['currentPet'] != null) {
+      final Map<String, dynamic> currentPetData = 
+          Map<String, dynamic>.from(petData['currentPet'] as Map);
+      _currentPet = Pet.fromJson(currentPetData);
     }
   }
 }

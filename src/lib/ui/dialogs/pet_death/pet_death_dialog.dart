@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stacked_services/stacked_services.dart';
 import 'package:my_app/ui/widgets/pet_sprite/pet_sprite.dart';
+import 'package:my_app/models/pet.dart';
 
 class PetDeathDialog extends StatelessWidget {
   final DialogRequest request;
@@ -14,7 +15,7 @@ class PetDeathDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pet = request.data['pet'];
+    final Pet pet = request.data['pet'] as Pet;
 
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -26,7 +27,7 @@ class PetDeathDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              '😢 Farewell 😢',
+              '\ud83d\ude22 Farewell \ud83d\ude22',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,

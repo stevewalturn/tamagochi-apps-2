@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stacked_services/stacked_services.dart';
 import 'package:my_app/models/enums/pet_state.dart';
 import 'package:my_app/ui/widgets/pet_sprite/pet_sprite.dart';
+import 'package:my_app/models/pet.dart';
 
 class PetEvolutionDialog extends StatelessWidget {
   final DialogRequest request;
@@ -15,8 +16,8 @@ class PetEvolutionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pet = request.data['pet'];
-    final newState = request.data['newState'] as PetState;
+    final Pet pet = request.data['pet'] as Pet;
+    final PetState newState = request.data['newState'] as PetState;
 
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -28,7 +29,7 @@ class PetEvolutionDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              '🎉 Evolution Time! 🎉',
+              '\ud83c\udf89 Evolution Time! \ud83c\udf89',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,

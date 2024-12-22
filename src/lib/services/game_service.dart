@@ -1,11 +1,12 @@
 import 'dart:math';
+import 'package:my_app/app/app.locator.dart';
 import 'package:my_app/services/pet_service.dart';
 
 class GameService {
-  final PetService _petService;
+  final _petService = locator<PetService>();
   final Random _random = Random();
 
-  GameService(this._petService);
+  GameService();
 
   double playFeedingGame() {
     if (!_petService.hasPet) {
@@ -15,9 +16,8 @@ class GameService {
       throw Exception('Cannot play games with a deceased pet');
     }
 
-    // Simulate game result (0-100)
     final score = _random.nextDouble() * 100;
-    final foodAmount = score / 2; // Convert score to food amount
+    final foodAmount = score / 2;
 
     try {
       _petService.feed(foodAmount);
