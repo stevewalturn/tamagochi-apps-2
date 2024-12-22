@@ -1,7 +1,7 @@
 {
   "package_name": "com.walturn.my_app",
-  "project_description": "The Flutter application follows the Stacked architecture, featuring routing, dependency injection, and dialog/bottom sheet management. It includes a startup screen, a home screen with a counter, a dialog, and a bottom sheet. The application also integrates with Firebase for analytics tracking and supports localization and multiple flavors (development and production).",
-  "architecture_overview": "The application is structured using the Stacked architecture, which separates the concerns of the UI, view models, and services. It uses Stacked for state management, routing, and dependency injection. The main components include the App, AppView, and various feature-specific views and view models. The application also utilizes services for managing dialogs, bottom sheets, and navigation, as well as observing screen transitions for analytics purposes.",
+  "project_description": "The Flutter application features a virtual pet management system, allowing users to create, care for, and monitor the well-being of their pet. The application includes several mini-games, such as feeding, cleaning, and exercising the pet, as well as a pet shop for purchasing items. The user can track the pet's various stats, including hunger, happiness, health, cleanliness, and energy, and the pet will evolve through different life stages as the user interacts with it. The application also includes a startup screen, home screen, and dialogs for pet evolution and death.",
+  "architecture_overview": "The application is built using the Stacked architecture, which separates the concerns of the UI, view models, and services. It uses Stacked for state management, routing, and dependency injection. The main components include the App, AppView, and various feature-specific views and view models. The application also utilizes services for managing dialogs, bottom sheets, navigation, and time-based updates to the pet's state. The project follows a modular design, with clear separation of concerns and reusable UI components.",
   "files": [
     {
       "name": "lib/app/app.dart",
@@ -840,6 +840,956 @@
         "package:stacked/stacked.dart",
         "package:stacked_services/stacked_services.dart"
       ]
+    },
+    {
+      "name": "lib/features/pet_creation/pet_creation_viewmodel.dart",
+      "description": "The PetCreationViewModel class is responsible for handling the logic and state management of the pet creation feature in the application. It provides the necessary functionality to create a new pet, including validating user input, interacting with the PetService to save the pet, and navigating to the pet home view after successful creation.",
+      "class_diagram": "@startuml\nclass PetCreationViewModel {\n  -_petService: PetService\n  -_navigationService: NavigationService\n  -_name: String\n  -_selectedType: String?\n\n  +selectedType: String?\n  +setName(String value): void\n  +setType(String type): void\n  +createPet(): Future<void>\n}\n@enduml",
+      "methods": [
+        {
+          "name": "setName",
+          "description": "Sets the name of the new pet being created.",
+          "parameters": [
+            "value"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "setType",
+          "description": "Sets the type of the new pet being created.",
+          "parameters": [
+            "type"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "createPet",
+          "description": "Validates the user input, creates a new pet using the PetService, and navigates to the pet home view.",
+          "parameters": [],
+          "return_type": "Future<void>"
+        }
+      ],
+      "dependencies": [
+        "stacked/stacked.dart",
+        "stacked_services/stacked_services.dart",
+        "my_app/app/app.locator.dart",
+        "my_app/app/app.router.dart",
+        "my_app/services/pet_service.dart"
+      ]
+    },
+    {
+      "name": "lib/features/mini_games/exercise/exercise_game_viewmodel.dart",
+      "description": "The ExerciseGameViewModel class is responsible for managing the logic and state of an exercise mini-game within a larger application. It handles the user's jumping actions, keeps track of the exercise points, and provides functionality to start, stop, and complete the game.",
+      "class_diagram": "@startuml\nclass ExerciseGameViewModel {\n  - _gameService: GameService\n  - _navigationService: NavigationService\n  - _exerciseTimer: Timer\n  - _isJumping: bool\n  - _exercisePoints: int\n  \n  + isJumping: bool\n  + exercisePoints: int\n  \n  + startJump()\n  + stopJump()\n  + finishGame()\n  + dispose()\n}\n@enduml",
+      "methods": [
+        {
+          "name": "startJump",
+          "description": "Starts the jumping action, sets the _isJumping flag to true, and starts the exercise timer.",
+          "parameters": null,
+          "return_type": "void"
+        },
+        {
+          "name": "stopJump",
+          "description": "Stops the jumping action, sets the _isJumping flag to false, and cancels the exercise timer.",
+          "parameters": null,
+          "return_type": "void"
+        },
+        {
+          "name": "_startExerciseTimer",
+          "description": "Starts the exercise timer, which increments the _exercisePoints every 100 milliseconds.",
+          "parameters": null,
+          "return_type": "void"
+        },
+        {
+          "name": "finishGame",
+          "description": "Cancels the exercise timer, calls the playExerciseGame method in the GameService, and navigates back to the previous screen.",
+          "parameters": null,
+          "return_type": "Future<void>"
+        },
+        {
+          "name": "dispose",
+          "description": "Cancels the exercise timer and calls the parent dispose method.",
+          "parameters": null,
+          "return_type": "void"
+        }
+      ],
+      "dependencies": [
+        "dart:async",
+        "package:stacked/stacked.dart",
+        "package:stacked_services/stacked_services.dart",
+        "package:my_app/app/app.locator.dart",
+        "package:my_app/services/game_service.dart"
+      ]
+    },
+    {
+      "name": "lib/features/mini_games/feeding/feeding_game_viewmodel.dart",
+      "description": "The FeedingGameViewModel class is responsible for the core logic and state management of a mini-game feature within the application. This class handles the gameplay loop, food item generation, tracking the player's score, and managing the game flow.",
+      "class_diagram": "@startuml\n\nclass FoodItem {\n    +Offset position\n    +bool isCollected\n    +FoodItem(position, [isCollected = false])\n}\n\nclass FeedingGameViewModel {\n    -_gameService: GameService\n    -_navigationService: NavigationService\n    -_random: Random\n    -_gameTimer: Timer\n    -_score: double\n    -_foods: List<FoodItem>\n\n    +foods: List<FoodItem>\n    +score: double\n\n    +startGame()\n    +onTapFood(Offset tapPosition)\n    +finishGame()\n}\n\n@enduml",
+      "methods": [
+        {
+          "name": "startGame",
+          "description": "Initializes the game state by resetting the score and clearing the list of food items, then starts the game loop.",
+          "parameters": null,
+          "return_type": "void"
+        },
+        {
+          "name": "onTapFood",
+          "description": "Handles user taps on the screen, checking if a food item is tapped and updating its collected state and the player's score accordingly.",
+          "parameters": [
+            "Offset tapPosition"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "finishGame",
+          "description": "Stops the game loop, saves the game progress, and navigates back to the previous screen.",
+          "parameters": null,
+          "return_type": "Future<void>"
+        }
+      ],
+      "dependencies": [
+        "dart:async",
+        "dart:math",
+        "package:flutter/material.dart",
+        "package:stacked/stacked.dart",
+        "package:stacked_services/stacked_services.dart",
+        "package:my_app/app/app.locator.dart",
+        "package:my_app/services/game_service.dart"
+      ]
+    },
+    {
+      "name": "lib/features/pet_home/pet_home_viewmodel.dart",
+      "description": "The PetHomeViewModel class is the main view model responsible for managing the state and functionality of the pet home screen in the application. It provides the core logic and data required to display the current state of the user's pet, as well as the ability to interact with the pet through various actions like feeding, cleaning, and exercising.",
+      "class_diagram": "@startuml\nclass PetHomeViewModel {\n  +bool hasPet\n  +bool isAlive\n  +String petName\n  +String petType\n  +PetState petState\n  +String stateDisplay\n  +String ageDisplay\n  +double hunger\n  +double happiness\n  +double health\n  +double cleanliness\n  +double energy\n\n  +void init()\n  +Future<void> openShop()\n  +Future<void> startFeedingGame()\n  +Future<void> startCleaningGame()\n  +Future<void> startExerciseGame()\n  +void dispose()\n}\n\nPetHomeViewModel --> PetService\nPetHomeViewModel --> TimeService\nPetHomeViewModel --> NavigationService\nPetHomeViewModel --> BottomSheetService\n@enduml",
+      "methods": [
+        {
+          "name": "init",
+          "description": "Initializes the view model by checking if the user has a pet. If not, it navigates to the pet creation view. If the user has a pet, it starts the game loop.",
+          "parameters": null,
+          "return_type": "void"
+        },
+        {
+          "name": "openShop",
+          "description": "Opens the pet shop bottom sheet, allowing the user to purchase items for their pet.",
+          "parameters": null,
+          "return_type": "Future<void>"
+        },
+        {
+          "name": "startFeedingGame",
+          "description": "Starts the feeding game view, allowing the user to feed their pet.",
+          "parameters": null,
+          "return_type": "Future<void>"
+        },
+        {
+          "name": "startCleaningGame",
+          "description": "Starts the cleaning game view, allowing the user to clean their pet.",
+          "parameters": null,
+          "return_type": "Future<void>"
+        },
+        {
+          "name": "startExerciseGame",
+          "description": "Starts the exercise game view, allowing the user to exercise their pet.",
+          "parameters": null,
+          "return_type": "Future<void>"
+        },
+        {
+          "name": "dispose",
+          "description": "Disposes of the time service and calls the parent class's dispose method.",
+          "parameters": null,
+          "return_type": "void"
+        }
+      ],
+      "dependencies": [
+        "stacked/stacked.dart",
+        "stacked_services/stacked_services.dart",
+        "my_app/app/app.locator.dart",
+        "my_app/app/app.router.dart",
+        "my_app/services/pet_service.dart",
+        "my_app/services/time_service.dart",
+        "my_app/models/enums/pet_state.dart"
+      ]
+    },
+    {
+      "name": "lib/features/pet_stats/pet_stats_view.dart",
+      "description": "The `PetStatsView` class is responsible for displaying the current status and statistics of a user's pet. It provides a visual representation of the pet's various attributes, such as hunger, happiness, health, cleanliness, and energy levels. This view is an important part of the application's pet management functionality, allowing users to monitor their pet's well-being and make informed decisions to ensure its optimal care.",
+      "class_diagram": "@startuml\nclass PetStatsView {\n  + builder(BuildContext, PetStatsViewModel, Widget?): Widget\n  + viewModelBuilder(BuildContext): PetStatsViewModel\n}\n\nclass PetStatsViewModel {\n  + hasPet: bool\n  + stateDisplay: String\n  + ageDisplay: String\n  + hunger: double\n  + happiness: double\n  + health: double\n  + cleanliness: double\n  + energy: double\n}\n@enduml",
+      "methods": [
+        {
+          "name": "builder",
+          "description": "The `builder` method is responsible for constructing the UI of the `PetStatsView`. It receives the current `PetStatsViewModel` instance and builds the necessary widgets to display the pet's statistics and status.",
+          "parameters": [
+            "BuildContext",
+            "PetStatsViewModel",
+            "Widget?"
+          ],
+          "return_type": "Widget"
+        },
+        {
+          "name": "viewModelBuilder",
+          "description": "The `viewModelBuilder` method is responsible for creating a new instance of the `PetStatsViewModel`, which provides the data and logic required by the `PetStatsView`.",
+          "parameters": [
+            "BuildContext"
+          ],
+          "return_type": "PetStatsViewModel"
+        }
+      ],
+      "dependencies": [
+        "package:flutter/material.dart",
+        "package:stacked/stacked.dart",
+        "package:my_app/features/pet_stats/pet_stats_viewmodel.dart",
+        "package:my_app/ui/common/app_colors.dart",
+        "package:my_app/ui/widgets/stat_bar/stat_bar.dart"
+      ]
+    },
+    {
+      "name": "lib/features/pet_stats/pet_stats_viewmodel.dart",
+      "description": "This Dart file contains the `PetStatsViewModel` class, which is responsible for managing the state and functionality related to the pet's statistics in the application. It serves as the view model for the pet statistics feature, providing the necessary data and logic to be consumed by the corresponding UI components.",
+      "class_diagram": "@startuml\nclass PetStatsViewModel {\n  -_petService: PetService\n  +pet: Pet\n  +ageDisplay: String\n  +stateDisplay: String\n  +hunger: double\n  +happiness: double\n  +health: double\n  +cleanliness: double\n  +energy: double\n  +hasPet: bool\n  +isAlive: bool\n  +refreshStats()\n}\n@enduml",
+      "methods": [
+        {
+          "name": "get pet",
+          "description": "Retrieves the current pet from the `PetService`.",
+          "parameters": null,
+          "return_type": "Pet?"
+        },
+        {
+          "name": "get ageDisplay",
+          "description": "Generates a formatted age display string based on the pet's age in days.",
+          "parameters": null,
+          "return_type": "String"
+        },
+        {
+          "name": "get stateDisplay",
+          "description": "Retrieves the display name of the pet's current state.",
+          "parameters": null,
+          "return_type": "String"
+        },
+        {
+          "name": "get hunger",
+          "description": "Retrieves the pet's current hunger level.",
+          "parameters": null,
+          "return_type": "double"
+        },
+        {
+          "name": "get happiness",
+          "description": "Retrieves the pet's current happiness level.",
+          "parameters": null,
+          "return_type": "double"
+        },
+        {
+          "name": "get health",
+          "description": "Retrieves the pet's current health level.",
+          "parameters": null,
+          "return_type": "double"
+        },
+        {
+          "name": "get cleanliness",
+          "description": "Retrieves the pet's current cleanliness level.",
+          "parameters": null,
+          "return_type": "double"
+        },
+        {
+          "name": "get energy",
+          "description": "Retrieves the pet's current energy level.",
+          "parameters": null,
+          "return_type": "double"
+        },
+        {
+          "name": "get hasPet",
+          "description": "Indicates whether the user has a pet or not.",
+          "parameters": null,
+          "return_type": "bool"
+        },
+        {
+          "name": "get isAlive",
+          "description": "Indicates whether the pet is alive or not.",
+          "parameters": null,
+          "return_type": "bool"
+        },
+        {
+          "name": "refreshStats",
+          "description": "Notifies listeners of changes to the pet's statistics.",
+          "parameters": null,
+          "return_type": "void"
+        }
+      ],
+      "dependencies": [
+        "package:stacked/stacked.dart",
+        "package:my_app/app/app.locator.dart",
+        "package:my_app/services/pet_service.dart",
+        "package:my_app/models/pet.dart"
+      ]
+    },
+    {
+      "name": "lib/models/enums/pet_state.dart",
+      "description": "This Dart file defines an `PetState` enum that represents the different stages of a pet's life cycle within the application. It provides key functionality and information related to the current state of a pet, enabling the application to manage and track the pet's evolution through various life stages.",
+      "class_diagram": "@startuml\n  enum PetState {\n    egg\n    baby\n    child\n    teen\n    adult\n    senior\n    dead\n  }\n\n  PetState {\n    + bool isAlive\n    + bool canEvolve\n    + PetState nextState()\n    + String displayName\n  }\n  @enduml",
+      "methods": [
+        {
+          "name": "isAlive",
+          "description": "Indicates whether the pet is currently alive or dead.",
+          "parameters": null,
+          "return_type": "bool"
+        },
+        {
+          "name": "canEvolve",
+          "description": "Indicates whether the pet can evolve to the next life stage.",
+          "parameters": null,
+          "return_type": "bool"
+        },
+        {
+          "name": "nextState",
+          "description": "Returns the next life stage for the pet, based on the current state.",
+          "parameters": null,
+          "return_type": "PetState"
+        },
+        {
+          "name": "displayName",
+          "description": "Returns the display name for the current pet state.",
+          "parameters": null,
+          "return_type": "String"
+        }
+      ],
+      "dependencies": []
+    },
+    {
+      "name": "lib/models/pet.dart",
+      "description": "The `Pet` class in this file represents a virtual pet that the user can interact with and care for. It encapsulates the core functionality and state of the pet, including its name, type, age, and various attributes such as hunger, happiness, health, cleanliness, and energy. The class provides methods for the user to perform actions like feeding, playing, cleaning, and exercising the pet, as well as handling the pet's automatic state updates and evolution over time. This file is a key component of the application's virtual pet management system, providing the essential building blocks for the user experience.",
+      "class_diagram": "@startuml\nclass Pet {\n  +String name\n  +String type\n  +PetState state\n  +double hunger\n  +double happiness\n  +double health\n  +double cleanliness\n  +double energy\n  +DateTime birthDate\n  +bool isAlive\n  +int ageInDays\n  +void feed(double amount)\n  +void play(double amount)\n  +void clean(double amount)\n  +void exercise(double amount)\n  +void rest(double amount)\n  +void update()\n  +bool tryEvolve()\n  +Map<String, dynamic> toJson()\n  +factory Pet.fromJson(Map<String, dynamic> json)\n}\n@enduml",
+      "methods": [
+        {
+          "name": "feed",
+          "description": "Increases the pet's hunger level by the specified amount, up to a maximum of 100.",
+          "parameters": [
+            "double amount"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "play",
+          "description": "Increases the pet's happiness level by the specified amount, up to a maximum of 100, and decreases its energy level by half the specified amount.",
+          "parameters": [
+            "double amount"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "clean",
+          "description": "Increases the pet's cleanliness level by the specified amount, up to a maximum of 100.",
+          "parameters": [
+            "double amount"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "exercise",
+          "description": "Increases the pet's health level by the specified amount, up to a maximum of 100, and decreases its energy level by the specified amount.",
+          "parameters": [
+            "double amount"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "rest",
+          "description": "Increases the pet's energy level by the specified amount, up to a maximum of 100.",
+          "parameters": [
+            "double amount"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "update",
+          "description": "Automatically updates the pet's state by decreasing its hunger, happiness, cleanliness, energy, and health levels over time. If any of these levels drop to 0, the pet is considered dead.",
+          "parameters": null,
+          "return_type": "void"
+        },
+        {
+          "name": "tryEvolve",
+          "description": "Attempts to evolve the pet to the next stage of its life cycle (e.g., from egg to baby, baby to child, etc.) based on certain requirements such as age and attribute levels.",
+          "parameters": null,
+          "return_type": "bool"
+        },
+        {
+          "name": "toJson",
+          "description": "Converts the pet's state to a JSON map for serialization and storage.",
+          "parameters": null,
+          "return_type": "Map<String, dynamic>"
+        },
+        {
+          "name": "fromJson",
+          "description": "Creates a new Pet instance from a JSON map, deserializing the pet's state.",
+          "parameters": [
+            "Map<String, dynamic> json"
+          ],
+          "return_type": "Pet"
+        }
+      ],
+      "dependencies": [
+        "my_app/models/enums/pet_state.dart"
+      ]
+    },
+    {
+      "name": "lib/services/pet_service.dart",
+      "description": "The PetService class is responsible for managing the lifecycle and state of a single pet within the application. It provides a centralized interface for creating, feeding, playing with, cleaning, exercising, and resting the pet, as well as handling pet evolution. This service ensures that the pet's well-being is maintained and that the application's pet-related functionality is consistent and reliable.",
+      "class_diagram": "@startuml\nclass PetService {\n  - _currentPet: Pet\n  + get currentPet: Pet\n  + get hasPet: bool\n  + createPet(name: String, type: String)\n  + updatePet()\n  + feed(amount: double)\n  + play(amount: double)\n  + clean(amount: double)\n  + exercise(amount: double)\n  + rest(amount: double)\n  + toJson(): Map<String, dynamic>\n  + loadFromJson(json: Map<String, dynamic>)\n}\n@enduml",
+      "methods": [
+        {
+          "name": "createPet",
+          "description": "Creates a new pet with the specified name and type, and sets it as the current pet.",
+          "parameters": [
+            "name: String",
+            "type: String"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "updatePet",
+          "description": "Updates the current pet, including checking for evolution and notifying any listeners.",
+          "parameters": [],
+          "return_type": "void"
+        },
+        {
+          "name": "feed",
+          "description": "Feeds the current pet the specified amount, if the pet is alive.",
+          "parameters": [
+            "amount: double"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "play",
+          "description": "Plays with the current pet the specified amount, if the pet is alive.",
+          "parameters": [
+            "amount: double"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "clean",
+          "description": "Cleans the current pet the specified amount, if the pet is alive.",
+          "parameters": [
+            "amount: double"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "exercise",
+          "description": "Exercises the current pet the specified amount, if the pet is alive.",
+          "parameters": [
+            "amount: double"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "rest",
+          "description": "Allows the current pet to rest the specified amount, if the pet is alive.",
+          "parameters": [
+            "amount: double"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "toJson",
+          "description": "Converts the current pet's data to a JSON map.",
+          "parameters": [],
+          "return_type": "Map<String, dynamic>"
+        },
+        {
+          "name": "loadFromJson",
+          "description": "Loads the current pet's data from a JSON map.",
+          "parameters": [
+            "json: Map<String, dynamic>"
+          ],
+          "return_type": "void"
+        }
+      ],
+      "dependencies": [
+        "package:my_app/models/pet.dart"
+      ]
+    },
+    {
+      "name": "lib/services/time_service.dart",
+      "description": "The TimeService class is responsible for managing the game loop and updating the pet's state at regular intervals. It integrates with the PetService to handle the core game logic and ensure the pet's progress is updated consistently.",
+      "class_diagram": "@startuml\nclass TimeService {\n  - PetService _petService\n  - Timer? _gameTimer\n\n  + TimeService(PetService)\n  + startGameLoop()\n  + stopGameLoop()\n  + dispose()\n}\n@enduml",
+      "methods": [
+        {
+          "name": "TimeService",
+          "description": "Constructor that takes a PetService instance and initializes the TimeService.",
+          "parameters": [
+            "PetService"
+          ],
+          "return_type": null
+        },
+        {
+          "name": "startGameLoop",
+          "description": "Starts the game loop, which updates the pet's state every second by calling the updatePet method on the PetService.",
+          "parameters": null,
+          "return_type": null
+        },
+        {
+          "name": "stopGameLoop",
+          "description": "Stops the game loop by canceling the existing Timer.",
+          "parameters": null,
+          "return_type": null
+        },
+        {
+          "name": "dispose",
+          "description": "Stops the game loop and releases any resources used by the TimeService.",
+          "parameters": null,
+          "return_type": null
+        }
+      ],
+      "dependencies": [
+        "dart:async",
+        "my_app/services/pet_service.dart"
+      ]
+    },
+    {
+      "name": "lib/ui/bottom_sheets/pet_shop/pet_shop_sheet.dart",
+      "description": "This Dart file defines a custom bottom sheet widget called `PetShopSheet` that provides an interface for purchasing pet-related items in an application. The main purpose of this file is to encapsulate the UI and functionality of a pet shop interface that allows users to purchase food, toys, and medicine for their pets.",
+      "class_diagram": "@startuml\nclass PetShopSheet extends StatelessWidget {\n  - Function(SheetResponse)? completer\n  - SheetRequest request\n  + build(BuildContext): Widget\n}\n\nclass _ShopItem extends StatelessWidget {\n  - String name\n  - String price\n  - IconData icon\n  - VoidCallback onTap\n  + build(BuildContext): Widget\n}\n@enduml",
+      "methods": [
+        {
+          "name": "build",
+          "description": "Builds the UI for the `PetShopSheet` widget, which includes a title, a list of shop items (food, toys, and medicine), and a 'Buy' button for each item.",
+          "parameters": [
+            "BuildContext"
+          ],
+          "return_type": "Widget"
+        },
+        {
+          "name": "build",
+          "description": "Builds the UI for a single shop item in the `PetShopSheet`, including an icon, the item name, the price, and a 'Buy' button.",
+          "parameters": [
+            "BuildContext"
+          ],
+          "return_type": "Widget"
+        }
+      ],
+      "dependencies": [
+        "flutter/material.dart",
+        "stacked_services/stacked_services.dart",
+        "my_app/ui/common/app_colors.dart"
+      ]
+    },
+    {
+      "name": "lib/services/game_service.dart",
+      "description": "The `GameService` class is responsible for managing the games and interactions that a user can play with their virtual pet. It provides the core functionality for feeding, cleaning, and exercising the pet, and simulates the results of these games to update the pet's state accordingly.",
+      "class_diagram": "@startuml\nclass GameService {\n  - PetService _petService\n  - Random _random\n\n  + playFeedingGame(): double\n  + playCleaningGame(): double\n  + playExerciseGame(): double\n}\n@enduml",
+      "methods": [
+        {
+          "name": "playFeedingGame",
+          "description": "Simulates a feeding game for the user's pet, updating the pet's hunger level accordingly.",
+          "parameters": null,
+          "return_type": "double"
+        },
+        {
+          "name": "playCleaningGame",
+          "description": "Simulates a cleaning game for the user's pet, updating the pet's cleanliness level accordingly.",
+          "parameters": null,
+          "return_type": "double"
+        },
+        {
+          "name": "playExerciseGame",
+          "description": "Simulates an exercise game for the user's pet, updating the pet's fitness level accordingly.",
+          "parameters": null,
+          "return_type": "double"
+        }
+      ],
+      "dependencies": [
+        "dart:math",
+        "package:my_app/services/pet_service.dart"
+      ]
+    },
+    {
+      "name": "lib/ui/dialogs/pet_evolution/pet_evolution_dialog.dart",
+      "description": "The PetEvolutionDialog class is responsible for displaying a dialog that shows the evolution of a pet from one state to another. This dialog is used to visually represent the progression of a pet's growth and development within the application's game or virtual pet system.",
+      "class_diagram": "@startuml\nclass PetEvolutionDialog {\n  + build(context: BuildContext): Widget\n  - _renderPetSprites(pet: PetEntity, newState: PetState): Widget\n  - _renderEvolutionMessage(pet: PetEntity, newState: PetState): Widget\n  - _renderContinueButton(completer: Function(DialogResponse)): Widget\n}\n@enduml",
+      "methods": [
+        {
+          "name": "build",
+          "description": "Builds the UI for the PetEvolutionDialog, displaying the current and new pet states, an evolution message, and a continue button.",
+          "parameters": [
+            "context: BuildContext"
+          ],
+          "return_type": "Widget"
+        },
+        {
+          "name": "_renderPetSprites",
+          "description": "Renders the pet sprite images for the current and new pet states.",
+          "parameters": [
+            "pet: PetEntity",
+            "newState: PetState"
+          ],
+          "return_type": "Widget"
+        },
+        {
+          "name": "_renderEvolutionMessage",
+          "description": "Renders the message congratulating the user on the pet's evolution.",
+          "parameters": [
+            "pet: PetEntity",
+            "newState: PetState"
+          ],
+          "return_type": "Widget"
+        },
+        {
+          "name": "_renderContinueButton",
+          "description": "Renders the 'Continue' button, which the user can press to dismiss the dialog.",
+          "parameters": [
+            "completer: Function(DialogResponse)"
+          ],
+          "return_type": "Widget"
+        }
+      ],
+      "dependencies": [
+        "package:flutter/material.dart",
+        "package:stacked_services/stacked_services.dart",
+        "package:my_app/models/enums/pet_state.dart",
+        "package:my_app/ui/widgets/pet_sprite/pet_sprite.dart"
+      ]
+    },
+    {
+      "name": "lib/ui/dialogs/pet_death/pet_death_dialog.dart",
+      "description": "The `PetDeathDialog` class is responsible for displaying a dialog to the user when a pet in the application has passed away. This dialog provides a respectful and informative way to notify the user of their pet's demise, and offers them the option to start a new journey by creating a new pet.",
+      "class_diagram": "@startuml\nclass PetDeathDialog {\n  +final DialogRequest request\n  +final Function(DialogResponse) completer\n  +build(context: BuildContext): Widget\n}\n@enduml",
+      "methods": [
+        {
+          "name": "build",
+          "description": "Builds the widget tree for the pet death dialog, including the pet sprite, the farewell message, and the 'Start New Journey' button.",
+          "parameters": [
+            "context: BuildContext"
+          ],
+          "return_type": "Widget"
+        }
+      ],
+      "dependencies": [
+        "flutter/material.dart",
+        "stacked_services/stacked_services.dart",
+        "my_app/ui/widgets/pet_sprite/pet_sprite.dart"
+      ]
+    },
+    {
+      "name": "lib/features/pet_creation/pet_creation_view.dart",
+      "description": "This file defines the `PetCreationView` class, which is responsible for the user interface and interaction for creating a new pet in the application. It provides a visual interface for users to enter the pet's name, select the pet type, and initiate the pet creation process.",
+      "class_diagram": "@startuml\nclass PetCreationView {\n  +builder(context, viewModel, child): Widget\n  +viewModelBuilder(context): PetCreationViewModel\n}\n\nclass PetCreationViewModel {\n  +setName(name: String): void\n  +setType(type: String): void\n  +createPet(): Future<void>\n  +selectedType: String\n  +modelError: dynamic\n  +isBusy: bool\n}\n\nclass _PetTypeOption {\n  +type: String\n  +emoji: String\n  +isSelected: bool\n  +onSelect(type: String): void\n  +build(context): Widget\n}\n\nPetCreationView -down-> PetCreationViewModel\nPetCreationView -down-> _PetTypeOption\n@enduml",
+      "methods": [
+        {
+          "name": "builder",
+          "description": "Builds the UI for the PetCreationView, including the app bar, text fields, pet type options, and the create pet button.",
+          "parameters": [
+            "context",
+            "viewModel",
+            "child"
+          ],
+          "return_type": "Widget"
+        },
+        {
+          "name": "viewModelBuilder",
+          "description": "Provides an instance of the PetCreationViewModel, which is used to manage the state and business logic for the pet creation process.",
+          "parameters": [
+            "context"
+          ],
+          "return_type": "PetCreationViewModel"
+        }
+      ],
+      "dependencies": [
+        "package:flutter/material.dart",
+        "package:stacked/stacked.dart",
+        "package:my_app/features/pet_creation/pet_creation_viewmodel.dart",
+        "package:my_app/ui/common/app_colors.dart",
+        "package:my_app/ui/widgets/action_button/action_button.dart"
+      ]
+    },
+    {
+      "name": "lib/ui/widgets/pet_sprite/pet_sprite.dart",
+      "description": "The PetSprite class is responsible for rendering a visual representation of a pet in the application. It displays an emoji-based sprite that reflects the current state of the pet, such as whether it's an egg, alive, or dead. The sprite is displayed within a circular container and can be sized according to the user's needs.",
+      "class_diagram": "@startuml\nclass PetSprite {\n  -String petType\n  -PetState state\n  -double size\n  +build(BuildContext): Widget\n  -_getEmoji(): String\n  -_getBackgroundColor(): Color\n}\n@enduml",
+      "methods": [
+        {
+          "name": "build",
+          "description": "Constructs the widget tree for the PetSprite, including the circular container and the emoji-based sprite.",
+          "parameters": [
+            "BuildContext"
+          ],
+          "return_type": "Widget"
+        },
+        {
+          "name": "_getEmoji",
+          "description": "Determines the appropriate emoji to display based on the pet's type and state.",
+          "parameters": null,
+          "return_type": "String"
+        },
+        {
+          "name": "_getBackgroundColor",
+          "description": "Determines the background color for the PetSprite based on the pet's state.",
+          "parameters": null,
+          "return_type": "Color"
+        }
+      ],
+      "dependencies": [
+        "package:flutter/material.dart",
+        "package:my_app/models/enums/pet_state.dart"
+      ]
+    },
+    {
+      "name": "lib/ui/widgets/stat_bar/stat_bar.dart",
+      "description": "The `StatBar` widget is responsible for displaying a visual representation of a statistic or progress value. It provides a reusable and customizable UI component that can be used throughout the application to present key metrics or data points.",
+      "class_diagram": "@startuml\nclass StatBar extends StatelessWidget {\n  +String label\n  +double value\n  +Color color\n  +double height\n  +double width\n  +build(BuildContext context): Widget\n}\n@enduml",
+      "methods": [
+        {
+          "name": "build",
+          "description": "Constructs the UI for the `StatBar` widget, which includes a label, a progress bar, and a numeric value display.",
+          "parameters": [
+            "BuildContext context"
+          ],
+          "return_type": "Widget"
+        }
+      ],
+      "dependencies": [
+        "package:flutter/material.dart"
+      ]
+    },
+    {
+      "name": "lib/features/mini_games/cleaning/cleaning_game_viewmodel.dart",
+      "description": "The CleaningGameViewModel is responsible for managing the logic and state of the cleaning mini-game within the application. It handles user interactions, calculates the player's cleanliness score, and provides functionality to complete the game.",
+      "class_diagram": "@startuml\nclass CleaningGameViewModel {\n  - _gameService : GameService\n  - _navigationService : NavigationService\n  - _cleanedAreas : List<Offset>\n  - _cleanlinessScore : double\n\n  + get cleanedAreas() : List<Offset>\n  + get cleanlinessScore() : double\n\n  + onDrag(DragUpdateDetails) : void\n  - _updateScore() : void\n  + finishGame() : Future<void>\n}\n@enduml",
+      "methods": [
+        {
+          "name": "onDrag",
+          "description": "Handles the user's drag gestures, adding the drag positions to the list of cleaned areas and updating the cleanliness score.",
+          "parameters": [
+            "DragUpdateDetails"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "_updateScore",
+          "description": "Calculates the cleanliness score based on the number of cleaned areas.",
+          "parameters": null,
+          "return_type": "void"
+        },
+        {
+          "name": "finishGame",
+          "description": "Completes the cleaning game, saves the game progress, and navigates back to the previous screen.",
+          "parameters": null,
+          "return_type": "Future<void>"
+        }
+      ],
+      "dependencies": [
+        "flutter/material.dart",
+        "stacked/stacked.dart",
+        "stacked_services/stacked_services.dart",
+        "my_app/app/app.locator.dart",
+        "my_app/services/game_service.dart"
+      ]
+    },
+    {
+      "name": "lib/features/mini_games/feeding/feeding_game_view.dart",
+      "description": "This file contains the main view for a feeding mini-game in a Flutter application. The feeding game is a simple game where the user taps on falling food items to feed a pet, earning points in the process. The view handles the game's UI, user interactions, and integration with the game's view model.",
+      "class_diagram": "@startuml\nclass FeedingGameView extends StackedView<FeedingGameViewModel> {\n    - Scaffold\n    - GestureDetector\n    - Container\n    - Stack\n    - Positioned\n    - Text\n    - ElevatedButton\n    + builder(BuildContext, FeedingGameViewModel, Widget?)\n    + viewModelBuilder(BuildContext): FeedingGameViewModel\n    + onViewModelReady(FeedingGameViewModel)\n    + onDispose(FeedingGameViewModel)\n}\n\nclass FeedingGameViewModel {\n    - Food[]\n    - score: double\n    - modelError: String?\n    + onTapFood(Offset)\n    + startGame()\n    + finishGame()\n    + dispose()\n}\n\nclass Food {\n    + position: Offset\n    + isCollected: bool\n}\n@enduml",
+      "methods": [
+        {
+          "name": "builder",
+          "description": "Builds the main UI for the feeding game view, including the game area, score display, and buttons.",
+          "parameters": [
+            "BuildContext",
+            "FeedingGameViewModel",
+            "Widget?"
+          ],
+          "return_type": "Widget"
+        },
+        {
+          "name": "viewModelBuilder",
+          "description": "Provides an instance of the FeedingGameViewModel to be used by the view.",
+          "parameters": [
+            "BuildContext"
+          ],
+          "return_type": "FeedingGameViewModel"
+        },
+        {
+          "name": "onViewModelReady",
+          "description": "Called when the view model is ready, starting the game.",
+          "parameters": [
+            "FeedingGameViewModel"
+          ],
+          "return_type": null
+        },
+        {
+          "name": "onDispose",
+          "description": "Called when the view is disposed, allowing the view model to clean up any resources.",
+          "parameters": [
+            "FeedingGameViewModel"
+          ],
+          "return_type": null
+        }
+      ],
+      "dependencies": [
+        "package:flutter/material.dart",
+        "package:stacked/stacked.dart",
+        "package:my_app/features/mini_games/feeding/feeding_game_viewmodel.dart",
+        "package:my_app/ui/common/app_colors.dart"
+      ]
+    },
+    {
+      "name": "lib/features/mini_games/exercise/exercise_game_view.dart",
+      "description": "A Flutter view for an interactive exercise mini-game where users can tap and hold a button to earn exercise points for their virtual pet, with game progression and point tracking",
+      "class_diagram": "@startuml\nclass ExerciseGameView {\n  +builder(BuildContext, ExerciseGameViewModel)\n  +viewModelBuilder(BuildContext)\n  +onDispose(ExerciseGameViewModel)\n}\n@enduml",
+      "methods": [
+        {
+          "name": "builder",
+          "description": "Constructs the UI for the exercise game, including exercise points display, interactive jumping button, and game controls",
+          "parameters": [
+            "BuildContext",
+            "ExerciseGameViewModel",
+            "Widget?"
+          ],
+          "return_type": "Widget"
+        },
+        {
+          "name": "viewModelBuilder",
+          "description": "Creates and initializes the view model for the exercise game",
+          "parameters": [
+            "BuildContext"
+          ],
+          "return_type": "ExerciseGameViewModel"
+        },
+        {
+          "name": "onDispose",
+          "description": "Manages cleanup and resource release when the view is disposed",
+          "parameters": [
+            "ExerciseGameViewModel"
+          ],
+          "return_type": null
+        }
+      ],
+      "dependencies": [
+        "flutter/material.dart",
+        "stacked/stacked.dart",
+        "my_app/features/mini_games/exercise/exercise_game_viewmodel.dart",
+        "my_app/ui/common/app_colors.dart"
+      ]
+    },
+    {
+      "name": "lib/features/pet_home/pet_home_view.dart",
+      "description": "The PetHomeView class is responsible for displaying the main user interface for the pet management feature of the application. It provides a comprehensive view of the user's pet, including its current state, statistics, and interactive actions to care for the pet.",
+      "class_diagram": "@startuml\nclass PetHomeView {\n  + builder(BuildContext, PetHomeViewModel, Widget?): Widget\n  + viewModelBuilder(BuildContext): PetHomeViewModel\n  + onViewModelReady(PetHomeViewModel): void\n}\n\nclass PetHomeViewModel {\n  + petName: String\n  + petType: PetType\n  + petState: PetState\n  + hunger: double\n  + happiness: double\n  + health: double\n  + cleanliness: double\n  + energy: double\n  + modelError: String?\n  + hasPet: bool\n  + isAlive: bool\n  + stateDisplay: String\n  + ageDisplay: String\n  + openShop(): void\n  + startFeedingGame(): void\n  + startCleaningGame(): void\n  + startExerciseGame(): void\n  + init(): void\n}\n\nPetHomeView --> PetHomeViewModel\n@enduml",
+      "methods": [
+        {
+          "name": "builder",
+          "description": "Builds the main UI for the PetHomeView, including the pet's information, stats, and interactive buttons.",
+          "parameters": [
+            "BuildContext",
+            "PetHomeViewModel",
+            "Widget?"
+          ],
+          "return_type": "Widget"
+        },
+        {
+          "name": "viewModelBuilder",
+          "description": "Creates a new instance of the PetHomeViewModel, which provides the data and logic for the PetHomeView.",
+          "parameters": [
+            "BuildContext"
+          ],
+          "return_type": "PetHomeViewModel"
+        },
+        {
+          "name": "onViewModelReady",
+          "description": "Initializes the PetHomeViewModel when the view is ready.",
+          "parameters": [
+            "PetHomeViewModel"
+          ],
+          "return_type": "void"
+        }
+      ],
+      "dependencies": [
+        "package:flutter/material.dart",
+        "package:stacked/stacked.dart",
+        "package:my_app/features/pet_home/pet_home_viewmodel.dart",
+        "package:my_app/ui/common/app_colors.dart",
+        "package:my_app/ui/widgets/pet_sprite/pet_sprite.dart",
+        "package:my_app/ui/widgets/action_button/action_button.dart",
+        "package:my_app/ui/widgets/stat_bar/stat_bar.dart"
+      ]
+    },
+    {
+      "name": "lib/features/mini_games/cleaning/cleaning_game_view.dart",
+      "description": "This Dart file defines the view for a cleaning mini-game in a Flutter application. The main purpose of this file is to provide the user interface and interaction for a game where the user cleans a pet by dragging their finger on the screen.",
+      "class_diagram": "@startuml\nclass CleaningGameView extends StackedView<CleaningGameViewModel> {\n  + builder(BuildContext context, CleaningGameViewModel viewModel, Widget? child): Widget\n  + viewModelBuilder(BuildContext context): CleaningGameViewModel\n}\n\nclass CleaningGameViewModel {\n  + modelError: dynamic\n  + cleanlinessScore: double\n  + cleanedAreas: List<Offset>\n  + onDrag(DragUpdateDetails details): void\n  + finishGame(): void\n}\n\nclass CleaningPainter extends CustomPainter {\n  + cleanedAreas: List<Offset>\n  + paint(Canvas canvas, Size size): void\n  + shouldRepaint(CleaningPainter oldDelegate): bool\n}\n@enduml",
+      "methods": [
+        {
+          "name": "builder",
+          "description": "Builds the UI for the cleaning game view, including the game area, cleanliness score, and finish button.",
+          "parameters": [
+            "BuildContext context",
+            "CleaningGameViewModel viewModel",
+            "Widget? child"
+          ],
+          "return_type": "Widget"
+        },
+        {
+          "name": "viewModelBuilder",
+          "description": "Creates an instance of the CleaningGameViewModel, which manages the state and logic of the cleaning game.",
+          "parameters": [
+            "BuildContext context"
+          ],
+          "return_type": "CleaningGameViewModel"
+        },
+        {
+          "name": "onDrag",
+          "description": "Handles the user's drag gestures on the game area, updating the cleaned areas and cleanliness score.",
+          "parameters": [
+            "DragUpdateDetails details"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "finishGame",
+          "description": "Allows the user to finish the cleaning game, potentially saving the result or navigating to another screen.",
+          "parameters": [],
+          "return_type": "void"
+        },
+        {
+          "name": "paint",
+          "description": "Draws the cleaned areas on the game area using a CustomPainter.",
+          "parameters": [
+            "Canvas canvas",
+            "Size size"
+          ],
+          "return_type": "void"
+        },
+        {
+          "name": "shouldRepaint",
+          "description": "Determines whether the CleaningPainter should be repainted when the cleaned areas change.",
+          "parameters": [
+            "CleaningPainter oldDelegate"
+          ],
+          "return_type": "bool"
+        }
+      ],
+      "dependencies": [
+        "package:flutter/material.dart",
+        "package:stacked/stacked.dart",
+        "package:my_app/features/mini_games/cleaning/cleaning_game_viewmodel.dart",
+        "package:my_app/ui/common/app_colors.dart"
+      ]
+    },
+    {
+      "name": "lib/ui/widgets/action_button/action_button.dart",
+      "description": "The ActionButton class is a reusable Flutter widget that provides a customizable button with an icon and label. It is designed to encapsulate the common functionality of an action-oriented button, making it easy to incorporate into various parts of the application UI.",
+      "class_diagram": "@startuml\nclass ActionButton {\n  - String label\n  - IconData icon\n  - VoidCallback onPressed\n  - Color? color\n  - bool isEnabled\n  + Widget build(BuildContext context)\n}\n@enduml",
+      "methods": [
+        {
+          "name": "build",
+          "description": "Builds the widget tree for the ActionButton, including the ElevatedButton and its child Row with the icon and label.",
+          "parameters": [
+            "BuildContext context"
+          ],
+          "return_type": "Widget"
+        }
+      ],
+      "dependencies": [
+        "package:flutter/material.dart"
+      ]
     }
   ],
   "dependencies": [
@@ -864,7 +1814,7 @@
       "purpose": "Creating gaps in layouts"
     }
   ],
-  "sequence_diagram": "@startuml\nactor User\nparticipant main\nparticipant AppView\nparticipant StartupView\nparticipant StartupViewModel\nparticipant HomeView\nparticipant HomeViewModel\n\nUser -> main: Launch app\nmain -> AppView: Create and run\nAppView -> StartupView: Initialize\nStartupView -> StartupViewModel: Run startup logic\nStartupViewModel -> HomeView: Navigate on completion\nHomeView -> HomeViewModel: Initialize\nUser -> HomeView: Interact\nHomeView -> HomeViewModel: Handle user actions\nHomeViewModel -> HomeView: Update UI\nHomeViewModel -> DialogService: Show dialog\nHomeViewModel -> BottomSheetService: Show bottom sheet\n@enduml",
-  "state_management_flow": "The application uses the Stacked architecture for state management. Each view has a corresponding ViewModel that handles the business logic and state for that view. The ViewModels are responsible for updating the UI, interacting with services (e.g., DialogService, BottomSheetService), and managing the application's overall state. The app.locator.dart file sets up the necessary dependency injections, allowing the ViewModels to access the required services.",
-  "navigation_flow": "The application's navigation is managed using the Stacked Router, defined in app.router.dart. The main entry point is the AppView, which initializes the Stacked architecture and displays the StartupView. After the startup logic is completed, the StartupViewModel navigates to the HomeView. The HomeView allows the user to interact with the application, triggering updates to the HomeViewModel, which in turn updates the UI and can show dialogs or bottom sheets as needed."
+  "sequence_diagram": "@startuml\nactor User\nparticipant main\nparticipant AppView\nparticipant StartupView\nparticipant StartupViewModel\nparticipant HomeView\nparticipant HomeViewModel\nparticipant PetCreationView\nparticipant PetCreationViewModel\nparticipant PetHomeView\nparticipant PetHomeViewModel\nparticipant PetStatsView\nparticipant PetStatsViewModel\nparticipant FeedingGameView\nparticipant FeedingGameViewModel\nparticipant CleaningGameView\nparticipant CleaningGameViewModel\nparticipant ExerciseGameView\nparticipant ExerciseGameViewModel\nparticipant PetShopSheet\nparticipant PetService\nparticipant TimeService\nparticipant GameService\n\nUser -> main: Launch app\nmain -> AppView: Create and run\nAppView -> StartupView: Initialize\nStartupView -> StartupViewModel: Run startup logic\nStartupViewModel -> HomeView: Navigate on completion\nHomeView -> HomeViewModel: Initialize\nUser -> HomeView: Interact (e.g., show dialog, show bottom sheet)\nHomeViewModel -> DialogService: Show dialog\nHomeViewModel -> BottomSheetService: Show bottom sheet\nUser -> PetCreationView: Create new pet\nPetCreationView -> PetCreationViewModel: Handle user input and create pet\nPetCreationViewModel -> PetService: Create new pet\nUser -> PetHomeView: View pet\nPetHomeView -> PetHomeViewModel: Initialize\nPetHomeViewModel -> PetService: Get current pet\nPetHomeViewModel -> TimeService: Start game loop\nUser -> PetHomeView: Interact (e.g., feed, clean, exercise pet)\nPetHomeViewModel -> GameService: Simulate game interactions\nPetHomeViewModel -> PetService: Update pet state\nUser -> PetStatsView: View pet stats\nPetStatsView -> PetStatsViewModel: Initialize\nPetStatsViewModel -> PetService: Get current pet\nUser -> FeedingGameView: Start feeding game\nFeedingGameView -> FeedingGameViewModel: Initialize\nFeedingGameViewModel -> GameService: Simulate feeding game\nUser -> CleaningGameView: Start cleaning game\nCleaningGameView -> CleaningGameViewModel: Initialize\nCleaningGameViewModel -> GameService: Simulate cleaning game\nUser -> ExerciseGameView: Start exercise game\nExerciseGameView -> ExerciseGameViewModel: Initialize\nExerciseGameViewModel -> GameService: Simulate exercise game\nUser -> PetShopSheet: Open pet shop\nPetShopSheet -> PetHomeViewModel: Handle user purchases\n@enduml",
+  "state_management_flow": "The application uses the Stacked architecture for state management. Each view has a corresponding ViewModel that handles the business logic and state for that view. The ViewModels are responsible for updating the UI, interacting with services (e.g., DialogService, BottomSheetService, PetService, GameService), and managing the application's overall state. The app.locator.dart file sets up the necessary dependency injections, allowing the ViewModels to access the required services. The PetService and TimeService are central to the pet management functionality, handling the pet's state updates and game loop, respectively.",
+  "navigation_flow": "The application's navigation is managed using the Stacked Router, defined in app.router.dart. The main entry point is the AppView, which initializes the Stacked architecture and displays the StartupView. After the startup logic is completed, the StartupViewModel navigates to the HomeView. The HomeView allows the user to interact with the application, triggering updates to the HomeViewModel, which in turn updates the UI and can show dialogs or bottom sheets as needed. The user can also navigate to the PetCreationView to create a new pet, the PetHomeView to manage their existing pet, and the PetStatsView to view the pet's detailed statistics. The mini-game views (FeedingGameView, CleaningGameView, ExerciseGameView) are accessed from the PetHomeView."
 }
